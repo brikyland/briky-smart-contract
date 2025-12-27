@@ -83,8 +83,13 @@ const config: HardhatUserConfig = {
     defaultNetwork: 'hardhat',
     networks: {
         hardhat: {
+            chainId: 31337,
             gas: 100000000,
             blockGasLimit: 1000000000,
+            mining: {
+                auto: true,
+                interval: 3000,
+            },
             ...getNetworkEnvVariable('local', COMMON_ENV_VARIABLE_NAMES),
         } as any,
         localhost: {

@@ -227,8 +227,8 @@ ReentrancyGuardUpgradeable {
         );
 
         emit NewOffer(
-            _collection,
             offerId,
+            _collection,
             _tokenId,
             msg.sender,
             _price,

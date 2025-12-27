@@ -327,6 +327,26 @@ IEstateTokenizer {
         address account
     ) external view returns (uint256 withdrawAt);
 
+    /**
+     *          Name            Description
+     *  @param  requestId       Request identifier.
+     *  @param  account         EVM address.
+     *  @return isWhitelisted   Whether the account is whitelisted for the private raise of the request.
+     */
+    function isWhitelistedFor(
+        uint256 requestId,
+        address account
+    ) external view returns (bool isWhitelisted);
+
+    /**
+     *          Name            Description
+     *  @param  account         EVM address.
+     *  @return isWhitelisted   Whether the account is whitelisted globally for private raises.
+     */
+    function isWhitelisted(
+        address account
+    ) external view returns (bool isWhitelisted);
+
 
     /* --- Command --- */
     /**
@@ -430,7 +450,7 @@ IEstateTokenizer {
     ) external;
 
     /**
-     *  @notice Whitelist or unwhitelist accounts for participation in the private sale of a specific request.
+     *  @notice Whitelist or unwhitelist accounts for the private sale of a specific request.
      *  @notice Whitelist only before the private sale ends.
      *
      *          Name            Description

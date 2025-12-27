@@ -74,6 +74,30 @@ IProjectLaunchpad {
     );
 
 
+    /* --- Whitelist --- */
+    /**
+     *  @notice Emitted when an account is whitelisted globally for private sales.
+     *
+     *          Name       Description
+     *  @param  account    Whitelisted account address.
+     */
+    event Whitelist(
+        address indexed account
+    );
+
+    /**
+     *  @notice Emitted when an account is unwhitelisted globally from private sales.
+     *
+     *          Name       Description
+     *  @param  account    Unwhitelisted account address.
+     *
+     *  @dev    Not affect whitelist of each request.
+     */
+    event Unwhitelist(
+        address indexed account
+    );
+
+
     /* --- Launch --- */
     /**
      *  @notice Emitted when a new launch is initiated.
@@ -191,14 +215,16 @@ IProjectLaunchpad {
      *  @param  roundId                 Round identifier.
      *  @param  cashbackFundId          Cashback fund identifier.
      *  @param  raiseStartsAt           When the raise starts.
-     *  @param  raiseEndsAt             When the raise ends.
+     *  @param  privateRaiseDuration    Private raise duration.
+     *  @param  publicRaiseDuration     Public raise duration.
      */
     event LaunchNextRoundSchedule(
         uint256 indexed launchId,
         uint256 indexed roundId,
         uint256 indexed cashbackFundId,
         uint40 raiseStartsAt,
-        uint40 raiseEndsAt
+        uint40 privateRaiseDuration,
+        uint40 publicRaiseDuration
     );
 
     /**
@@ -283,10 +309,12 @@ IProjectLaunchpad {
     error NotEnoughSoldQuantity();
     error NotInitiated();
     error NotRegisteredAccount();
+    error NotWhitelistedAccount();
     error NothingToWithdraw();
     error RegisteredAccount();
     error StillRaising();
     error Timeout();
+    error WhitelistedAccount();
 
 
     /** ===== FUNCTION ===== **/
@@ -355,10 +383,11 @@ IProjectLaunchpad {
      *  @dev    Phases of a round:
      *          - Unscheduled: agenda.raiseStartsAt = 0
      *          - Scheduled: block.timestamp < agenda.raiseStartsAt
-     *          - Raise: agenda.raiseStartsAt <= block.timestamp < agenda.raiseEndsAt
-     *          - Awaiting Confirmation: agenda.raiseEndsAt
+     *          - Private Raise: agenda.raiseStartsAt <= block.timestamp < agenda.privateRaiseEndsAt
+     *          - Public Raise: agenda.privateRaiseEndsAt <= block.timestamp < agenda.publicRaiseEndsAt
+     *          - Awaiting Confirmation: agenda.publicRaiseEndsAt
      *                                      <= block.timestamp
-     *                                      < agenda.raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
+     *                                      < agenda.publicRaiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
      *          - Confirmed: agenda.confirmedAt > 0
      *          - Cancelled: quota.totalSupply = 0
      */
@@ -388,6 +417,15 @@ IProjectLaunchpad {
         uint256 roundId,
         address account
     ) external view returns (uint256 withdrawAt);
+
+    /**
+     *          Name            Description
+     *  @param  account         EVM address.
+     *  @return isWhitelisted   Whether the account is whitelisted globally for private raises.
+     */
+    function isWhitelisted(
+        address account
+    ) external view returns (bool isWhitelisted);
 
 
     /* --- Command --- */
@@ -508,7 +546,8 @@ IProjectLaunchpad {
      *  @param  cashbackCurrencies      Array of extra currency addresses to cashback.
      *  @param  cashbackDenominations   Array of extra currency denominations to cashback, respective to each extra currency.
      *  @param  raiseStartsAt           Raise start timestamp.
-     *  @param  raiseDuration           Raise duration.
+     *  @param  privateRaiseDuration           Private raise duration.
+     *  @param  publicRaiseDuration           Public raise duration.
      *  @return index                   Index of the scheduled round.
      *
      *  @dev    Permission: Initiator of the launch.
@@ -520,7 +559,8 @@ IProjectLaunchpad {
         address[] calldata cashbackCurrencies,
         uint256[] calldata cashbackDenominations,
         uint40 raiseStartsAt,
-        uint40 raiseDuration
+        uint40 privateRaiseDuration,
+        uint40 publicRaiseDuration
     ) external returns (uint256 index);
 
 

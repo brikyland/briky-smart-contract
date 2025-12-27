@@ -25,6 +25,7 @@ ICommon {
      *  @notice Emitted when a new dividend package is issued.
      *
      *          Name            Description
+     *  @param  dividendId      Dividend identifier.
      *  @param  governor        Governor contract address.
      *  @param  tokenId         Asset identifier from the governor contract.
      *  @param  issuer          Issuer address.
@@ -34,9 +35,10 @@ ICommon {
      *  @param  note            Issuance note.
      */
     event NewDividend(
+        uint256 indexed dividendId,
         address indexed governor,
         uint256 indexed tokenId,
-        address indexed issuer,
+        address issuer,
         uint256 totalWeight,
         uint256 value,
         address currency,

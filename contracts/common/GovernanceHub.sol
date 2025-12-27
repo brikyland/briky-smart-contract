@@ -315,10 +315,10 @@ ReentrancyGuardUpgradeable {
         proposal.state = ProposalState.Pending;
 
         emit NewProposal(
-            _governor,
             proposalId,
-            msg.sender,
+            _governor,
             _tokenId,
+            msg.sender,
             _operator,
             _uuid,
             _rule,

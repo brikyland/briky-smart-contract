@@ -45,10 +45,10 @@ IValidatable {
      *  @notice Emitted when a new proposal is submitted.
      *
      *          Name                Description
-     *  @param  governor            Governor contract address.
      *  @param  proposalId          Proposal identifier.
-     *  @param  proposer            Proposer address.
+     *  @param  governor            Governor contract address.
      *  @param  tokenId             Asset identifier from the governor contract.
+     *  @param  proposer            Proposer address.
      *  @param  uuid                Checksum of proposal context.
      *  @param  operator            Operator address.
      *  @param  rule                Rule to determine verdict.
@@ -57,10 +57,10 @@ IValidatable {
      *  @param  admissionExpiry     Expiration for proposal admission.
      */
     event NewProposal(
-        address indexed governor,
         uint256 indexed proposalId,
-        address indexed proposer,
-        uint256 tokenId,
+        address indexed governor,
+        uint256 indexed tokenId,
+        address proposer,
         address operator,
         bytes32 uuid,
         ProposalRule rule,

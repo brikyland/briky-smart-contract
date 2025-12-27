@@ -47,8 +47,8 @@ ICommon {
      *  @notice Emitted when a new offer is listed.
      *
      *          Name                Description
-     *  @param  collection          Token collection contract address.
      *  @param  offerId             Offer identifier.
+     *  @param  collection          Token collection contract address.
      *  @param  tokenId             Token identifier.
      *  @param  seller              Seller address.
      *  @param  price               Sale value.
@@ -57,8 +57,8 @@ ICommon {
      *  @param  currency            Sale currency address.
      */
     event NewOffer(
-        address indexed collection,
         uint256 indexed offerId,
+        address indexed collection,
         uint256 indexed tokenId,
         address seller,
         uint256 price,

@@ -157,6 +157,7 @@ ReentrancyGuardUpgradeable {
         );
 
         emit NewDividend(
+            dividendId,
             _governor,
             _tokenId,
             msg.sender,

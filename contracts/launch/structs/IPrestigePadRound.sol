@@ -91,9 +91,15 @@ interface IPrestigePadRound is IValidation {
         /// @notice When the raise starts.
         uint40 raiseStartsAt;
 
-        /// @notice When the raise ends.
-        /// @dev    `raiseEndsAt >= raiseStartsAt`.
-        uint40 raiseEndsAt;
+        /// @notice When the private raise ends and the public raise starts
+        /// @dev    If `raiseStartsAt` is equal to `privateRaiseEndsAt`, the private raise is not proceeded.
+        /// @dev    `privateRaiseEndsAt >= raiseStartsAt`.
+        uint40 privateRaiseEndsAt;
+
+        /// @notice When the public raise ends.
+        /// @dev    If `privateRaiseEndsAt` is equal to `publicRaiseEndsAt`, the public raise is not proceeded.
+        /// @dev    `publicRaiseEndsAt >= privateRaiseEndsAt`.
+        uint40 publicRaiseEndsAt;
 
         /// @notice When the round is confirmed to mint.
         uint40 confirmAt;
@@ -123,10 +129,11 @@ interface IPrestigePadRound is IValidation {
      *  @dev    Phases of a round:
      *          - Unscheduled: agenda.raiseStartsAt = 0
      *          - Scheduled: block.timestamp < agenda.raiseStartsAt
-     *          - Raise: agenda.raiseStartsAt <= block.timestamp < agenda.raiseEndsAt
-     *          - Awaiting Confirmation: agenda.raiseEndsAt
+     *          - Private Raise: agenda.raiseStartsAt <= block.timestamp < agenda.privateRaiseEndsAt
+     *          - Public Raise: agenda.privateRaiseEndsAt <= block.timestamp < agenda.publicRaiseEndsAt
+     *          - Awaiting Confirmation: agenda.publicRaiseEndsAt
      *                                      <= block.timestamp
-     *                                      < agenda.raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
+     *                                      < agenda.publicRaiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
      *          - Confirmed: agenda.confirmedAt > 0
      *          - Cancelled: quota.totalSupply = 0
      */

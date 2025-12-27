@@ -161,7 +161,7 @@ interface IEstateForgerRequest is IValidation {
         uint40 privateSaleEndsAt;
 
         /// @notice When the public sale ends.
-        /// @dev    If `privateSaleEndsAt` is equal to `publicSaleEndsAt), the public sale is not proceeded.
+        /// @dev    If `privateSaleEndsAt` is equal to `publicSaleEndsAt`, the public sale is not proceeded.
         /// @dev    `publicSaleEndsAt >= privateSaleEndsAt`.
         uint40 publicSaleEndsAt;
 

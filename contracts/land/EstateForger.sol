@@ -477,7 +477,7 @@ ReentrancyGuardUpgradeable {
     }
 
     /**
-     *  @notice Whitelist or unwhitelist accounts for participation in the private sale of a specific request.
+     *  @notice Whitelist or unwhitelist accounts for the private sale of a specific request.
      *  @notice Whitelist only before the private sale ends.
      *
      *          Name            Description

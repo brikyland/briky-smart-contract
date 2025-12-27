@@ -212,6 +212,50 @@ ReentrancyGuardUpgradeable {
         );
     }
 
+    /**
+     *  @notice Whitelist or unwhitelist globally multiple addresses for private raises.
+     *
+     *          Name                Description
+     *  @param  _accounts           Array of EVM addresses.
+     *  @param  _isWhitelisted      Whether the operation is whitelisting or unwhitelisting.
+     *  @param  _signatures         Array of admin signatures.
+     *
+     *  @dev    Administrative operator.
+     */
+    function whitelist(
+        address[] calldata _accounts,
+        bool _isWhitelisted,
+        bytes[] calldata _signatures
+    ) external {
+        IAdmin(admin).verifyAdminSignatures(
+            abi.encode(
+                address(this),
+                "whitelist",
+                _accounts,
+                _isWhitelisted
+            ),
+            _signatures
+        );
+
+        if (_isWhitelisted) {
+            for (uint256 i; i < _accounts.length; ++i) {
+                if (isWhitelisted[_accounts[i]]) {
+                    revert WhitelistedAccount();
+                }
+                isWhitelisted[_accounts[i]] = true;
+                emit Whitelist(_accounts[i]);
+            }
+        } else {
+            for (uint256 i; i < _accounts.length; ++i) {
+                if (!isWhitelisted[_accounts[i]]) {
+                    revert NotWhitelistedAccount();
+                }
+                isWhitelisted[_accounts[i]] = false;
+                emit Unwhitelist(_accounts[i]);
+            }
+        }
+    }
+
 
     /* --- Query --- */
     /**
@@ -237,10 +281,11 @@ ReentrancyGuardUpgradeable {
      *  @dev    Phases of a round:
      *          - Unscheduled: agenda.raiseStartsAt = 0
      *          - Scheduled: block.timestamp < agenda.raiseStartsAt
-     *          - Raise: agenda.raiseStartsAt <= block.timestamp < agenda.raiseEndsAt
-     *          - Awaiting Confirmation: agenda.raiseEndsAt
+     *          - Private Raise: agenda.raiseStartsAt <= block.timestamp < agenda.privateRaiseEndsAt
+     *          - Public Raise: agenda.privateRaiseEndsAt <= block.timestamp < agenda.publicRaiseEndsAt
+     *          - Awaiting Confirmation: agenda.publicRaiseEndsAt
      *                                      <= block.timestamp
-     *                                      < agenda.raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
+     *                                      < agenda.publicRaiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT
      *          - Confirmed: agenda.confirmedAt > 0
      *          - Cancelled: quota.totalSupply = 0
      */
@@ -578,11 +623,13 @@ ReentrancyGuardUpgradeable {
      *  @param  _cashbackCurrencies         Array of extra currency addresses to cashback.
      *  @param  _cashbackDenominations      Array of extra currency denominations to cashback, respective to each extra currency.
      *  @param  _raiseStartsAt              Raise start timestamp.
-     *  @param  _raiseDuration              Raise duration.
+     *  @param  _privateRaiseDuration       Private raise duration.
+     *  @param  _publicRaiseDuration        Public raise duration.
      *
      *  @return Index of the scheduled round.
      *
      *  @dev    Permission: Initiator of the launch.
+     *  @dev    Total raise duration must be no less than `PrestigePadConstant.RAISE_MINIMUM_DURATION`.
      */
     function scheduleNextRound(
         uint256 _launchId,
@@ -591,7 +638,8 @@ ReentrancyGuardUpgradeable {
         address[] calldata _cashbackCurrencies,
         uint256[] calldata _cashbackDenominations,
         uint40 _raiseStartsAt,
-        uint40 _raiseDuration
+        uint40 _privateRaiseDuration,
+        uint40 _publicRaiseDuration
     ) external
     whenNotPaused
     nonReentrant
@@ -600,8 +648,8 @@ ReentrancyGuardUpgradeable {
     returns (uint256) {
         if (_cashbackBaseRate > CommonConstant.RATE_MAX_SUBUNIT
             || _cashbackCurrencies.length != _cashbackDenominations.length
-            || _raiseStartsAt < block.timestamp
-            || _raiseDuration < PrestigePadConstant.RAISE_MINIMUM_DURATION) {
+            || _raiseStartsAt <= block.timestamp
+            || _privateRaiseDuration + _publicRaiseDuration < PrestigePadConstant.RAISE_MINIMUM_DURATION) {
             revert InvalidInput();
         }
 
@@ -656,14 +704,16 @@ ReentrancyGuardUpgradeable {
         round.quote.cashbackFundId = cashbackFundId;
 
         round.agenda.raiseStartsAt = _raiseStartsAt;
-        round.agenda.raiseEndsAt = _raiseStartsAt + _raiseDuration;
+        round.agenda.privateRaiseEndsAt = _raiseStartsAt + _privateRaiseDuration;
+        round.agenda.publicRaiseEndsAt = _raiseStartsAt + _privateRaiseDuration + _publicRaiseDuration;
 
         emit LaunchNextRoundSchedule(
             _launchId,
             roundId,
             cashbackFundId,
             _raiseStartsAt,
-            _raiseDuration
+            _privateRaiseDuration,
+            _publicRaiseDuration
         );
 
         return currentIndex;
@@ -769,8 +819,8 @@ ReentrancyGuardUpgradeable {
             revert AlreadyConfirmed();
         }
 
-        uint256 raiseEndsAt = round.agenda.raiseEndsAt;
-        if (raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
+        uint256 publicRaiseEndsAt = round.agenda.publicRaiseEndsAt;
+        if (publicRaiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT <= block.timestamp) {
             revert Timeout();
         }
 
@@ -779,9 +829,13 @@ ReentrancyGuardUpgradeable {
             revert NotEnoughSoldQuantity();
         }
 
-        /// @dev    If confirming before the anticipated due, `raiseEndsAt` must be overwrite with the current timestamp.
-        if (raiseEndsAt > block.timestamp) {
-            round.agenda.raiseEndsAt = uint40(block.timestamp);
+        /// @dev    If confirming before the anticipated due, `privateRaiseEndsAt` and `publicRaiseEndsAt` must be overwritten
+        ///         with the current timestamp.
+        if (round.agenda.privateRaiseEndsAt > block.timestamp) {
+            round.agenda.privateRaiseEndsAt = uint40(block.timestamp);
+        }
+        if (publicRaiseEndsAt > block.timestamp) {
+            round.agenda.publicRaiseEndsAt = uint40(block.timestamp);
         }
         /// @dev    Confirmed round:  agenda.confirmAt > 0
         round.agenda.confirmAt = uint40(block.timestamp);
@@ -945,11 +999,11 @@ ReentrancyGuardUpgradeable {
         }
 
         if (round.quota.totalQuantity != 0) {
-            uint256 raiseEndsAt = round.agenda.raiseEndsAt;
-            if (raiseEndsAt > block.timestamp) {
+            uint256 publicRaiseEndsAt = round.agenda.publicRaiseEndsAt;
+            if (publicRaiseEndsAt > block.timestamp) {
                 revert StillRaising();
             }
-            if (raiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT > block.timestamp
+            if (publicRaiseEndsAt + PrestigePadConstant.RAISE_CONFIRMATION_TIME_LIMIT > block.timestamp
                 && round.quota.raisedQuantity >= round.quota.minRaisingQuantity) {
                 revert InvalidWithdrawing();
             }
@@ -1132,7 +1186,8 @@ ReentrancyGuardUpgradeable {
             revert AlreadyConfirmed();
         }
         if (round.agenda.raiseStartsAt > block.timestamp
-            || round.agenda.raiseEndsAt <= block.timestamp) {
+            || (round.agenda.privateRaiseEndsAt > block.timestamp && !isWhitelisted[msg.sender])
+            || round.agenda.publicRaiseEndsAt <= block.timestamp) {
             revert InvalidContributing();
         }
 

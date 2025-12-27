@@ -24,6 +24,11 @@ IPrestigePad {
     /// @dev    rounds[roundId]
     mapping(uint256 => PrestigePadRound) internal rounds;
 
+
+    /// @dev    isWhitelisted[account]
+    mapping(address => bool) public isWhitelisted;
+
+
     uint256 public launchNumber;
     uint256 public roundNumber;
 
